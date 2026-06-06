@@ -1,0 +1,86 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                🎓 Principal's Office: <span class="text-indigo-600">Administrative Hub</span>
+            </h2>
+            <a href="{{ route('staff.index') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition shadow-sm">
+                👥 Manage All Staff
+            </a>
+        </div>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            @if($unassignedTeachers > 0)
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-400 text-red-700 flex justify-between items-center rounded-r-lg">
+                <p class="font-bold">⚠️ There are {{ $unassignedTeachers }} teachers without an assigned class!</p>
+                <a href="{{ route('staff.index') }}" class="underline font-black italic">Fix Now →</a>
+            </div>
+            @endif
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Total Staff</p>
+                    <h3 class="text-2xl font-black">{{ $staffCount }}</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Total Students</p>
+                    <h3 class="text-2xl font-black">{{ $totalStudents }}</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Attendance Today</p>
+                    <h3 class="text-2xl font-black text-green-600">{{ $attendanceToday }}</h3>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Current Term</p>
+                    <h3 class="text-2xl font-black text-indigo-600">1st Term</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-4 border-b pb-2 text-lg">Administrative Quick Links</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <a href="{{ route('students.index') }}" class="p-4 bg-gray-50 rounded-lg hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition">
+                                <span class="block font-bold text-indigo-700">Student Admissions</span>
+                                <span class="text-xs text-gray-500">View and admit new students</span>
+                            </a>
+                            <a href="#" class="p-4 bg-gray-50 rounded-lg hover:bg-green-50 border border-transparent hover:border-green-200 transition">
+                                <span class="block font-bold text-green-700">Academic Reports</span>
+                                <span class="text-xs text-gray-500">School-wide performance analysis</span>
+                            </a>
+                            <a href="#" class="p-4 bg-gray-50 rounded-lg hover:bg-yellow-50 border border-transparent hover:border-yellow-200 transition">
+                                <span class="block font-bold text-yellow-700">Inventory/Supplies</span>
+                                <span class="text-xs text-gray-500">Manage school assets</span>
+                            </a>
+                            <a href="#" class="p-4 bg-gray-50 rounded-lg hover:bg-red-50 border border-transparent hover:border-red-200 transition">
+                                <span class="block font-bold text-red-700">Disciplinary Records</span>
+                                <span class="text-xs text-gray-500">Track student behavior issues</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 class="font-bold text-gray-700 mb-4 border-b pb-2">Recent Staff Logins</h3>
+                    <div class="space-y-4">
+                        @foreach($staffList as $staff)
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-700">
+                                {{ substr($staff->name, 0, 1) }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">{{ $staff->name }}</p>
+                                <p class="text-[10px] text-gray-400 uppercase">{{ $staff->role }} — {{ $staff->class_assigned ?? 'Admin' }}</p>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>
