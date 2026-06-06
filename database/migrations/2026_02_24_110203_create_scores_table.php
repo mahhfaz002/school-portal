@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Heal any orphaned 'scores' table left by an interrupted migration
+        // (e.g. a prior deploy that failed on the foreign-key step before this
+        // migration was recorded). Safe no-op on a clean database.
+        Schema::dropIfExists('scores');
+
         Schema::create('scores', function (Blueprint $table) {
             $table->id();
             // Link to the student and delete scores if student is removed
