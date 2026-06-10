@@ -14,6 +14,7 @@ class Student extends Model
         'email',
         'admission_number',
         'class_arm',
+        'section',
         'parent_phone',
         'fees_balance',
         'blood_group',

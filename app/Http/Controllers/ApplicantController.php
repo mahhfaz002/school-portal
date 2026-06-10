@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
 use App\Models\Applicant;
+use App\Models\SchoolClass;
 use App\Models\Student;
+use App\Support\Sections;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ApplicantController extends Controller
 {
@@ -50,6 +53,57 @@ class ApplicantController extends Controller
         return back()->with('success', 'Application submitted successfully! Please expect our response via your email and/or phone contact.');
     }
 
+    /** ICT: show the admission application form. */
+    public function createApplication()
+    {
+        return view('admission.apply', [
+            'sections' => Sections::ALL,
+            'classes'  => SchoolClass::orderBy('section')->orderBy('name')->get(),
+        ]);
+    }
+
+    /**
+     * ICT: store a new admission application (section + class + documents).
+     * FSLC required for secondary, junior WAEC for senior secondary.
+     */
+    public function storeApplication(Request $request)
+    {
+        $isSenior = $request->input('section') === Sections::SENIOR;
+        $isSecondary = in_array($request->input('section'), [Sections::JUNIOR, Sections::SENIOR], true);
+
+        $validated = $request->validate([
+            'full_name'      => 'required|string|max:255',
+            'address'        => 'required|string|max:255',
+            'date_of_birth'  => 'required|date|before:today',
+            'gender'         => 'required|string|max:20',
+            'parent_name'    => 'required|string|max:255',
+            'parent_phone'   => 'required|string|max:50',
+            'parent_email'   => 'required|email|max:255',
+            'section'        => ['required', Rule::in(Sections::ALL)],
+            'desired_class'  => 'required|string|max:100',
+            'passport'           => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'birth_certificate'  => 'required|file|mimes:pdf,jpg,jpeg,png|max:4096',
+            'indigene_letter'    => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:4096',
+            'fslc'               => ($isSecondary ? 'required' : 'nullable').'|file|mimes:pdf,jpg,jpeg,png|max:4096',
+            'junior_waec'        => ($isSenior ? 'required' : 'nullable').'|file|mimes:pdf,jpg,jpeg,png|max:4096',
+        ]);
+
+        $data = collect($validated)->except(['passport', 'birth_certificate', 'indigene_letter', 'fslc', 'junior_waec'])->all();
+        $data['status'] = 'pending';
+
+        $pp = $request->file('passport');
+        $data['passport'] = 'data:'.$pp->getMimeType().';base64,'.base64_encode(file_get_contents($pp->getRealPath()));
+        $data['birth_cert_path'] = $request->file('birth_certificate')->store('documents/certificates');
+        if ($request->hasFile('indigene_letter')) $data['indigene_letter_path'] = $request->file('indigene_letter')->store('documents/indigene');
+        if ($request->hasFile('fslc')) $data['fslc_path'] = $request->file('fslc')->store('documents/fslc');
+        if ($request->hasFile('junior_waec')) $data['junior_waec_path'] = $request->file('junior_waec')->store('documents/jwaec');
+
+        $applicant = Applicant::create($data);
+        ActivityLog::record("Created admission application for {$applicant->full_name}", 'admission.apply');
+
+        return redirect()->route('admission.apply')->with('success', "Application for {$applicant->full_name} submitted to the Registrar for approval.");
+    }
+
     /** Registrar review panel. */
     public function index()
     {
@@ -74,6 +128,7 @@ class ApplicantController extends Controller
             'full_name'        => $applicant->full_name,
             'admission_number' => $admissionNumber,
             'class_arm'        => $applicant->desired_class,
+            'section'          => $applicant->section ?? Sections::fromClassName($applicant->desired_class),
             'parent_phone'     => $applicant->parent_phone,
             'email'            => $applicant->parent_email,
             'fees_balance'     => 0,

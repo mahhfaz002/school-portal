@@ -21,18 +21,18 @@ class ClassManagementTest extends TestCase
     public function test_principal_can_create_a_class(): void
     {
         $principal = User::where('role', 'principal')->firstOrFail();
-        $this->actingAs($principal)->post('/classes', ['name' => 'JSS1C'])->assertRedirect();
-        $this->assertDatabaseHas('classes', ['name' => 'JSS1C', 'active' => true]);
+        $this->actingAs($principal)->post('/classes', ['name' => 'JSS1C', 'section' => 'Junior Secondary'])->assertRedirect();
+        $this->assertDatabaseHas('classes', ['name' => 'JSS1C', 'section' => 'Junior Secondary', 'active' => true]);
     }
 
     public function test_ict_can_create_a_class_but_teacher_cannot(): void
     {
         $this->actingAs(User::where('role', 'ict')->firstOrFail())
-            ->post('/classes', ['name' => 'SSS1B'])->assertRedirect();
+            ->post('/classes', ['name' => 'SSS1B', 'section' => 'Senior Secondary'])->assertRedirect();
         $this->assertDatabaseHas('classes', ['name' => 'SSS1B']);
 
         $this->actingAs(User::where('role', 'teacher')->firstOrFail())
-            ->post('/classes', ['name' => 'SSS1C'])->assertForbidden();
+            ->post('/classes', ['name' => 'SSS1C', 'section' => 'Senior Secondary'])->assertForbidden();
     }
 
     public function test_principal_assignment_persists_to_pivot(): void

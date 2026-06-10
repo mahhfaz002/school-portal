@@ -75,9 +75,14 @@
 
             <div class="mt-10 text-center no-print">
                 <button onclick="window.print()" style="background-color: #1e293b; color: white; padding: 10px 30px; border-radius: 5px; font-weight: bold; cursor: pointer;">
-                    🖨️ PRINT RECEIPT
+                    🖨️ PRINT
                 </button>
-                <a href="{{ route('students.show', $payment->student->id) }}" class="block mt-4 text-blue-600 underline">Back to History</a>
+                <a href="{{ route('payments.receipt.pdf', $payment->id) }}" style="background-color:#2563eb; color:white; padding:10px 30px; border-radius:5px; font-weight:bold; margin-left:8px; text-decoration:none;">⬇️ DOWNLOAD PDF</a>
+                @if(auth()->user()->role === 'student')
+                    <a href="{{ route('dashboard') }}" class="block mt-4 text-blue-600 underline">Back to Dashboard</a>
+                @else
+                    <a href="{{ route('students.show', $payment->student->id) }}" class="block mt-4 text-blue-600 underline">Back to History</a>
+                @endif
             </div>
         </div>
     </div>

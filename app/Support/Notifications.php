@@ -82,4 +82,98 @@ class Notifications
     {
         return ['count' => $count, 'url' => $url, 'label' => $label];
     }
+
+    /**
+     * Full role-aware notification feed for the dedicated notifications page.
+     * Each item: ['icon','title','detail','url','time'(Carbon|null)].
+     */
+    public static function feedFor(?User $user): array
+    {
+        if (!$user) {
+            return [];
+        }
+
+        $items = [];
+
+        // Announcements visible to everyone in their lane.
+        if (Schema::hasTable('announcements')) {
+            $student = $user->role === 'student' ? Student::where('email', $user->email)->first() : null;
+            $classArm = $student->class_arm ?? null;
+            $query = \App\Models\Announcement::query();
+            if (method_exists(\App\Models\Announcement::class, 'scopeVisibleTo')) {
+                $query->visibleTo($user->role, $classArm);
+            }
+            foreach ($query->latest()->limit(15)->get() as $a) {
+                $items[] = [
+                    'icon'   => '📢',
+                    'title'  => $a->title,
+                    'detail' => \Illuminate\Support\Str::limit($a->body, 140),
+                    'url'    => route('announcements.index'),
+                    'time'   => $a->created_at,
+                ];
+            }
+        }
+
+        // Role-specific pending actions.
+        switch ($user->role) {
+            case 'principal':
+                if (Schema::hasTable('payslips')) {
+                    foreach (Payslip::with('staff')->where('status', 'submitted')->latest()->get() as $p) {
+                        $items[] = ['icon' => '💰', 'title' => 'Payslip awaiting approval',
+                            'detail' => ($p->staff->name ?? 'Staff').' — '.$p->month, 'url' => route('payroll.review'), 'time' => $p->submitted_at ?? $p->updated_at];
+                    }
+                }
+                break;
+            case 'accountant':
+                if (Schema::hasTable('payslips')) {
+                    foreach (Payslip::with('staff')->where('status', 'flagged')->latest()->get() as $p) {
+                        $items[] = ['icon' => '⚠️', 'title' => 'Payslip flagged for correction',
+                            'detail' => ($p->staff->name ?? 'Staff').' — '.($p->flag_comment ?? ''), 'url' => route('payroll.index'), 'time' => $p->updated_at];
+                    }
+                }
+                break;
+            case 'exam_officer':
+                foreach (ResultQuery::where('status', 'open')->latest()->get() as $q) {
+                    $items[] = ['icon' => '❓', 'title' => 'Open result query',
+                        'detail' => \Illuminate\Support\Str::limit($q->message ?? '', 120), 'url' => route('exams.queries'), 'time' => $q->created_at];
+                }
+                break;
+            case 'ict':
+                foreach (SupportTicket::where('status', '!=', 'resolved')->latest()->get() as $t) {
+                    $items[] = ['icon' => '🛠️', 'title' => 'Open support ticket',
+                        'detail' => \Illuminate\Support\Str::limit($t->subject ?? $t->message ?? '', 120), 'url' => route('support.index'), 'time' => $t->created_at];
+                }
+                break;
+            case 'admin':
+                foreach (Applicant::where('status', 'pending')->latest()->get() as $ap) {
+                    $items[] = ['icon' => '🧾', 'title' => 'Pending admission application',
+                        'detail' => $ap->full_name ?? '', 'url' => route('admission.admin'), 'time' => $ap->created_at];
+                }
+                break;
+            case 'teacher':
+                $subjectIds = $user->subjects()->pluck('subjects.id');
+                if ($subjectIds->isNotEmpty()) {
+                    foreach (Exam::whereIn('subject_id', $subjectIds)->where('status', 'draft')->get() as $e) {
+                        $items[] = ['icon' => '✍️', 'title' => 'Exam to author', 'detail' => $e->title ?? '', 'url' => route('dashboard'), 'time' => $e->updated_at];
+                    }
+                    foreach (Exam::whereIn('subject_id', $subjectIds)->whereIn('status', ['released', 'grading'])->whereHas('submissions')->get() as $e) {
+                        $items[] = ['icon' => '📝', 'title' => 'Exam to grade', 'detail' => $e->title ?? '', 'url' => route('dashboard'), 'time' => $e->updated_at];
+                    }
+                }
+                break;
+            case 'student':
+                $student = Student::where('email', $user->email)->first();
+                if ($student) {
+                    foreach (Exam::where('status', 'released')->get()->filter(fn ($e) => in_array($student->class_arm, $e->class_arms, true)) as $e) {
+                        $items[] = ['icon' => '📝', 'title' => 'Exam available', 'detail' => $e->title ?? '', 'url' => route('myexams.available'), 'time' => $e->updated_at];
+                    }
+                }
+                break;
+        }
+
+        // Newest first; undated items sink to the bottom.
+        usort($items, fn ($a, $b) => ($b['time']?->timestamp ?? 0) <=> ($a['time']?->timestamp ?? 0));
+
+        return $items;
+    }
 }

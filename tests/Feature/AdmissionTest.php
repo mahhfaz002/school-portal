@@ -76,6 +76,27 @@ class AdmissionTest extends TestCase
         ])->count());
     }
 
+    public function test_ict_can_create_application_but_not_approve(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        $ict = User::where('role', 'ict')->firstOrFail();
+
+        $this->actingAs($ict)->post('/admissions/apply', [
+            'full_name' => 'New Kid', 'address' => '1 Road', 'gender' => 'Male',
+            'date_of_birth' => '2014-05-01', 'parent_name' => 'P', 'parent_phone' => '080',
+            'parent_email' => 'p@example.com', 'section' => 'Junior Secondary', 'desired_class' => 'JSS1',
+            'passport' => \Illuminate\Http\UploadedFile::fake()->create('p.jpg', 100, 'image/jpeg'),
+            'birth_certificate' => \Illuminate\Http\UploadedFile::fake()->create('bc.pdf', 100),
+            'fslc' => \Illuminate\Http\UploadedFile::fake()->create('fslc.pdf', 100),
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('applicants', ['full_name' => 'New Kid', 'section' => 'Junior Secondary']);
+
+        // ICT can no longer approve.
+        $a = Applicant::where('full_name', 'New Kid')->firstOrFail();
+        $this->actingAs($ict)->post("/admin/admissions/{$a->id}/approve")->assertForbidden();
+    }
+
     public function test_teacher_cannot_admit(): void
     {
         $applicant = $this->applicant();

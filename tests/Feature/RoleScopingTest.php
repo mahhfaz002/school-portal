@@ -56,7 +56,7 @@ class RoleScopingTest extends TestCase
     {
         $ict = $this->as('ict');
         $this->actingAs($ict)->post('/subjects', ['name' => 'Civic Education'])->assertRedirect();
-        $this->actingAs($ict)->post('/classes', ['name' => 'JSS3B'])->assertRedirect();
+        $this->actingAs($ict)->post('/classes', ['name' => 'JSS3B', 'section' => 'Junior Secondary'])->assertRedirect();
 
         $student = \App\Models\Student::firstOrFail();
         $this->actingAs($ict)->put("/students/{$student->id}", [

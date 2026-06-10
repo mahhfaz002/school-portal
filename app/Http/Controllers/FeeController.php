@@ -15,12 +15,17 @@ class FeeController extends Controller
      */
     public function index(Request $request)
     {
-        $classes = SchoolClass::orderBy('name')->pluck('name');
+        $classes = SchoolClass::orderBy('section')->orderBy('name')->get();
         $students = Student::orderBy('class_arm')->orderBy('full_name')->get();
 
         $recentBills = FeeBill::with('student')->latest()->take(15)->get();
 
-        return view('fees.index', compact('classes', 'students', 'recentBills'));
+        return view('fees.index', [
+            'classes'  => $classes,
+            'students' => $students,
+            'recentBills' => $recentBills,
+            'sections' => \App\Support\Sections::ALL,
+        ]);
     }
 
     /**

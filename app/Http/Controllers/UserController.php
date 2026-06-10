@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\SchoolClass;
 use App\Models\Subject;
+use App\Support\Sections;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -40,9 +41,10 @@ class UserController extends Controller
     public function create()
     {
         return view('staff.create', [
-            'classes'  => SchoolClass::orderBy('name')->get(),
-            'subjects' => Subject::orderBy('name')->get(),
+            'classes'  => SchoolClass::orderBy('section')->orderBy('name')->get(),
+            'subjects' => Subject::orderBy('section')->orderBy('name')->get(),
             'roles'    => self::STAFF_ROLES,
+            'sections' => Sections::ALL,
         ]);
     }
 
@@ -109,8 +111,9 @@ class UserController extends Controller
 
         return view('staff.show', [
             'staff'       => $user,
-            'allClasses'  => SchoolClass::orderBy('name')->get(),
-            'allSubjects' => Subject::orderBy('name')->get(),
+            'allClasses'  => SchoolClass::orderBy('section')->orderBy('name')->get(),
+            'allSubjects' => Subject::orderBy('section')->orderBy('name')->get(),
+            'sections'    => Sections::ALL,
         ]);
     }
 

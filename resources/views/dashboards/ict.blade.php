@@ -5,6 +5,9 @@
                 🖥️ ICT System Console: <span class="text-purple-600">Administrator</span>
             </h2>
             <div class="flex gap-2">
+                <a href="{{ route('admission.apply') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 transition text-sm">
+                    📝 New Admission Application
+                </a>
                 <a href="{{ route('support.index') }}" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-purple-700 transition text-sm">
                     🛠️ Support Tickets ({{ $openTickets }})
                 </a>

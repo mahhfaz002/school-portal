@@ -1,6 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">📋 Admission Review Panel</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">📋 Admission Review Panel</h2>
+            @can('create_admissions')
+            <a href="{{ route('admission.apply') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-700 text-sm">+ New Application</a>
+            @endcan
+        </div>
     </x-slot>
 
     <div class="py-12">
@@ -35,13 +40,16 @@
                                         @endif
                                         <div>
                                             <p class="font-bold text-gray-800">{{ $applicant->full_name }}</p>
-                                            <p class="text-xs text-gray-400">DOB {{ $applicant->date_of_birth }} · {{ $applicant->gender }}</p>
+                                            <p class="text-xs text-gray-400">{{ $applicant->gender }} · {{ $applicant->age() !== null ? $applicant->age().' yrs' : 'DOB '.$applicant->date_of_birth }}</p>
+                                            @if($applicant->section)<p class="text-[10px] font-bold text-indigo-700">{{ $applicant->section }}</p>@endif
                                             @if($applicant->admission_number)<p class="text-xs font-mono text-green-700">{{ $applicant->admission_number }}</p>@endif
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-4 text-xs space-y-1">
                                     @if($applicant->birth_cert_path)<a href="{{ media_url($applicant->birth_cert_path) }}" target="_blank" class="block text-indigo-600 underline">Birth certificate</a>@endif
+                                    @if($applicant->fslc_path)<a href="{{ media_url($applicant->fslc_path) }}" target="_blank" class="block text-indigo-600 underline">FSLC</a>@endif
+                                    @if($applicant->junior_waec_path)<a href="{{ media_url($applicant->junior_waec_path) }}" target="_blank" class="block text-indigo-600 underline">Junior WAEC</a>@endif
                                     @if($applicant->indigene_letter_path)<a href="{{ media_url($applicant->indigene_letter_path) }}" target="_blank" class="block text-indigo-600 underline">Indigene letter</a>@endif
                                     @if(!$applicant->birth_cert_path && !$applicant->indigene_letter_path)<span class="text-gray-400">—</span>@endif
                                 </td>

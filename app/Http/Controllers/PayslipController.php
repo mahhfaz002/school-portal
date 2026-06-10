@@ -99,7 +99,22 @@ class PayslipController extends Controller
         abort_unless($payslip->status === 'approved', 403, 'Only approved payslips can be paid.');
         $payslip->update(['status' => 'paid', 'paid_at' => now()]);
 
-        return back()->with('success', "Salary paid to {$payslip->staff->name}.");
+        return back()->with('success', "Salary paid to {$payslip->staff->name}. Payslip generated.");
+    }
+
+    /** Printable payslip (bursar only). */
+    public function show(Payslip $payslip)
+    {
+        $payslip->load('staff');
+        return view('hr.payslip', compact('payslip'));
+    }
+
+    /** Downloadable payslip PDF (bursar only). */
+    public function downloadSlip(Payslip $payslip)
+    {
+        $payslip->load('staff');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('hr.payslip_pdf', compact('payslip'));
+        return $pdf->download('Payslip_'.\Illuminate\Support\Str::slug($payslip->staff->name ?? 'staff').'_'.$payslip->month.'.pdf');
     }
 
     // ---- Principal review ----

@@ -3,25 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Subject;
+use App\Support\Sections;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class SubjectController extends Controller
 {
-    // List all subjects and show the add form
+    // List all subjects (grouped by section) and show the add form
     public function index()
     {
-        $subjects = Subject::orderBy('name', 'asc')->get();
-        return view('subjects.index', compact('subjects'));
+        $subjects = Subject::orderBy('section')->orderBy('name')->get();
+        return view('subjects.index', ['subjects' => $subjects, 'sections' => Sections::ALL]);
     }
 
-    // Save a new subject
+    // Save a new subject (with its section)
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|unique:subjects,name|max:255',
+        $data = $request->validate([
+            'name'    => 'required|string|unique:subjects,name|max:255',
+            'section' => ['nullable', Rule::in(Sections::ALL)],
         ]);
 
-        Subject::create(['name' => $request->name]);
+        Subject::create(['name' => $data['name'], 'section' => $data['section'] ?? null]);
 
         return redirect()->back()->with('success', 'Subject added successfully!');
     }

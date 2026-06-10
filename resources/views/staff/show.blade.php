@@ -57,12 +57,19 @@
                 @can('manage_staff')
                 <form action="{{ route('staff.assignments', $staff) }}" method="POST">
                     @csrf
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Filter by Section</label>
+                        <select id="sectionFilter" class="w-full sm:w-64 border-gray-300 rounded-md shadow-sm text-sm">
+                            <option value="">All sections</option>
+                            @foreach($sections as $s)<option value="{{ $s }}">{{ $s }}</option>@endforeach
+                        </select>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Classes</label>
                             <div class="grid grid-cols-2 gap-1 max-h-44 overflow-y-auto border rounded-md p-2">
                                 @foreach($allClasses as $c)
-                                    <label class="flex items-center gap-2 text-sm py-1">
+                                    <label class="assign-item flex items-center gap-2 text-sm py-1" data-section="{{ $c->section }}">
                                         <input type="checkbox" name="class_ids[]" value="{{ $c->id }}" class="rounded" {{ $staff->classes->contains($c->id) ? 'checked' : '' }}> {{ $c->name }}
                                     </label>
                                 @endforeach
@@ -72,13 +79,21 @@
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Subjects</label>
                             <div class="grid grid-cols-2 gap-1 max-h-44 overflow-y-auto border rounded-md p-2">
                                 @foreach($allSubjects as $s)
-                                    <label class="flex items-center gap-2 text-sm py-1">
+                                    <label class="assign-item flex items-center gap-2 text-sm py-1" data-section="{{ $s->section }}">
                                         <input type="checkbox" name="subject_ids[]" value="{{ $s->id }}" class="rounded" {{ $staff->subjects->contains($s->id) ? 'checked' : '' }}> {{ $s->name }}
                                     </label>
                                 @endforeach
                             </div>
                         </div>
                     </div>
+                    <script>
+                        document.getElementById('sectionFilter')?.addEventListener('change', function () {
+                            const sec = this.value;
+                            document.querySelectorAll('.assign-item').forEach(el => {
+                                el.style.display = (!sec || !el.dataset.section || el.dataset.section === sec) ? 'flex' : 'none';
+                            });
+                        });
+                    </script>
                     <div class="text-right mt-4">
                         <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-green-700 text-sm">Save Assignments</button>
                     </div>

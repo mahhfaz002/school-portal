@@ -86,16 +86,16 @@
                         {{ $scores->avg(fn($s) => $s->ca_score + $s->exam_score) ? number_format($scores->avg(fn($s) => $s->ca_score + $s->exam_score), 1) : '0' }}%
                     </h3>
                 </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-red-500">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Fees Balance</p>
+                <div id="fees" class="bg-white p-6 rounded-xl shadow-sm border-b-4 border-red-500">
+                    <p class="text-xs font-bold text-gray-400 uppercase">Fees Balance (Expected to Pay)</p>
                     <h3 class="text-2xl font-black text-red-600">₦{{ number_format($student->fees_balance, 2) }}</h3>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div id="results" class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
-                        <h3 class="font-bold text-gray-700">Termly Results - 1st Term 2025/2026</h3>
+                        <h3 class="font-bold text-gray-700">Termly Results — {{ setting('current_term','1st Term') }} {{ setting('current_session','2025/2026') }}</h3>
                         <a href="{{ route('reports.download', $student->id) }}" class="flex items-center text-xs text-blue-600 font-bold hover:text-blue-900 transition">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Download Report Card
@@ -166,6 +166,7 @@
                             <div class="text-right">
                                 <p class="text-sm font-black text-green-600">+ ₦{{ number_format($payment->amount, 2) }}</p>
                                 <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded uppercase font-bold">{{ $payment->payment_method }}</span>
+                                <a href="{{ route('payments.receipt', $payment) }}" class="block mt-1 text-[11px] text-blue-600 font-bold hover:underline">🧾 Receipt</a>
                             </div>
                         </div>
                         @empty

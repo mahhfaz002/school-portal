@@ -40,8 +40,12 @@ class Permissions
         'manage_fees'          => ['accountant'],
         'view_fees'            => ['proprietor', 'accountant', 'principal'],
 
-        // Admissions intake — Admin/Registrar (+ ICT support).
-        'manage_admissions'    => ['admin', 'ict'],
+        // Admissions: ICT creates applications; Admin/Registrar approves/rejects.
+        'create_admissions'    => ['ict'],
+        'manage_admissions'    => ['admin'],
+
+        // Academic term/session control — Principal.
+        'manage_term'          => ['principal'],
 
         // Exam lifecycle — Exam Officer (+ ICT support during exams).
         'manage_exams'         => ['exam_officer', 'ict'],
@@ -63,8 +67,8 @@ class Permissions
         // Teacher-attendance oversight report.
         'view_staff_attendance'=> ['principal', 'proprietor'],
 
-        // Academic structure.
-        'manage_subjects'      => ['principal', 'admin', 'exam_officer', 'ict'],
+        // Academic structure — only Principal & ICT add/remove subjects.
+        'manage_subjects'      => ['principal', 'ict'],
 
         // Technical support — ICT handles tickets; anyone can raise one.
         'handle_tickets'       => ['ict'],

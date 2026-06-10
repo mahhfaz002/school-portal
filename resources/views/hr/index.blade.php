@@ -61,7 +61,7 @@
                                         <button class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-emerald-700">Pay</button>
                                     </form>
                                 @elseif($status === 'paid')
-                                    <span class="text-xs text-emerald-600 font-bold">✓ Paid</span>
+                                    <a href="{{ route('payroll.slip', $slip) }}" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded font-bold hover:bg-emerald-700">✓ Paid · Payslip</a>
                                 @else
                                     <span class="text-xs text-gray-400 italic">awaiting principal</span>
                                 @endif

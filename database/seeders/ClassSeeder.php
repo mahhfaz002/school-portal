@@ -32,11 +32,21 @@ class ClassSeeder extends Seeder
             SchoolClass::firstOrCreate(
                 ['name' => $name],
                 [
-                    'level'   => Str::startsWith($name, 'SSS') ? 'SSS' : (Str::startsWith($name, 'JSS') ? 'JSS' : null),
-                    'section' => Str::substr($name, -1),
+                    'level'   => \App\Support\Sections::fromClassName($name),
+                    'section' => \App\Support\Sections::fromClassName($name),
                     'active'  => true,
                 ]
             );
+        }
+
+        // Ensure each section has its default class ladder.
+        foreach (\App\Support\Sections::DEFAULT_CLASSES as $section => $classNames) {
+            foreach ($classNames as $name) {
+                SchoolClass::firstOrCreate(
+                    ['name' => $name],
+                    ['level' => $section, 'section' => $section, 'active' => true]
+                );
+            }
         }
 
         // Wire the demo teacher to JSS1A + Mathematics/English via pivots.

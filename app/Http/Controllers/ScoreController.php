@@ -19,12 +19,23 @@ class ScoreController extends Controller
     public function create(Request $request)
     {
         $user = auth()->user();
+        $isTeacher = $user->role === 'teacher';
 
-        $class = $request->query('class')
-            ?? ($user->role === 'teacher' ? $user->class_assigned : null);
+        if ($isTeacher) {
+            // Teachers only see classes & subjects assigned to them this term.
+            $classes = $user->classes()->pluck('classes.name')->sort()->values();
+            $subjects = $user->subjects()->orderBy('name')->get();
+        } else {
+            $classes = Student::select('class_arm')->whereNotNull('class_arm')->distinct()->orderBy('class_arm')->pluck('class_arm');
+            $subjects = Subject::orderBy('name')->get();
+        }
 
-        $classes = Student::select('class_arm')->whereNotNull('class_arm')->distinct()->orderBy('class_arm')->pluck('class_arm');
-        $subjects = Subject::orderBy('name')->get();
+        $class = $request->query('class') ?? $classes->first();
+
+        // A teacher may only open a class they are assigned to.
+        if ($isTeacher && $class && !$classes->contains($class)) {
+            abort(403, 'You are not assigned to this class.');
+        }
 
         $students = $class
             ? Student::where('class_arm', $class)->orderBy('full_name')->get()
@@ -49,6 +60,12 @@ class ScoreController extends Controller
             'scores.*.ca'   => "nullable|numeric|min:0|max:$caMax",
             'scores.*.exam' => "nullable|numeric|min:0|max:$examMax",
         ]);
+
+        // Teachers may only enter scores for subjects assigned to them this term.
+        $user = auth()->user();
+        if ($user->role === 'teacher' && !$user->subjects()->whereKey($validated['subject_id'])->exists()) {
+            abort(403, 'You are not assigned to this subject.');
+        }
 
         $term = setting('current_term', '1st Term');
         $session = setting('current_session', '2025/2026');

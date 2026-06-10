@@ -23,11 +23,18 @@
                     <form action="{{ route('fees.student') }}" method="POST" class="space-y-4">
                         @csrf
                         <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Section</label>
+                            <select id="feeSection" class="w-full border-gray-300 rounded-md shadow-sm text-sm">
+                                <option value="">All sections</option>
+                                @foreach($sections as $sec)<option value="{{ $sec }}">{{ $sec }}</option>@endforeach
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Student</label>
-                            <select name="student_id" class="w-full border-gray-300 rounded-md shadow-sm" required>
+                            <select name="student_id" id="feeStudent" class="w-full border-gray-300 rounded-md shadow-sm" required>
                                 <option value="">Select student…</option>
                                 @foreach($students as $s)
-                                    <option value="{{ $s->id }}">{{ $s->full_name }} ({{ $s->class_arm }}) — bal ₦{{ number_format($s->fees_balance,0) }}</option>
+                                    <option value="{{ $s->id }}" data-section="{{ $s->section ?? \App\Support\Sections::fromClassName($s->class_arm) }}">{{ $s->full_name }} ({{ $s->class_arm }}) — bal ₦{{ number_format($s->fees_balance,0) }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -57,11 +64,16 @@
                             <input type="number" step="0.01" name="amount" class="w-full border-gray-300 rounded-md shadow-sm" required>
                         </div>
                         <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Section</label>
+                            <select id="classFeeSection" class="w-full border-gray-300 rounded-md shadow-sm text-sm mb-2">
+                                <option value="">All sections</option>
+                                @foreach($sections as $sec)<option value="{{ $sec }}">{{ $sec }}</option>@endforeach
+                            </select>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Apply to Classes</label>
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-1 max-h-40 overflow-y-auto border rounded-md p-2">
                                 @forelse($classes as $class)
-                                    <label class="flex items-center gap-2 text-sm py-1">
-                                        <input type="checkbox" name="classes[]" value="{{ $class }}" class="rounded"> {{ $class }}
+                                    <label class="class-fee-item flex items-center gap-2 text-sm py-1" data-section="{{ $class->section }}">
+                                        <input type="checkbox" name="classes[]" value="{{ $class->name }}" class="rounded"> {{ $class->name }}
                                     </label>
                                 @empty
                                     <p class="text-xs text-gray-400">No classes.</p>
@@ -72,6 +84,22 @@
                     </form>
                 </div>
             </div>
+            <script>
+                document.getElementById('feeSection')?.addEventListener('change', function () {
+                    const sec = this.value;
+                    document.querySelectorAll('#feeStudent option').forEach(o => {
+                        if (!o.value) return;
+                        o.hidden = sec && o.dataset.section !== sec;
+                    });
+                    document.getElementById('feeStudent').value = '';
+                });
+                document.getElementById('classFeeSection')?.addEventListener('change', function () {
+                    const sec = this.value;
+                    document.querySelectorAll('.class-fee-item').forEach(el => {
+                        el.style.display = (!sec || el.dataset.section === sec) ? 'flex' : 'none';
+                    });
+                });
+            </script>
             @endcan
 
             <!-- Recent bills -->

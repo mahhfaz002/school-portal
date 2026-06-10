@@ -72,6 +72,51 @@
                         </div>
                     </div>
 
+                    <!-- Term / Session control -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <h3 class="font-bold text-gray-700 mb-1 text-lg">📅 Academic Term Control</h3>
+                        <p class="text-xs text-gray-500 mb-4">Set the active session &amp; term. This updates fees, exams, scores and every dashboard.</p>
+                        <form method="POST" action="{{ route('term.update') }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @csrf
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Session</label>
+                                @php $startYear = (int) substr(setting('current_session', date('Y').'/'.(date('Y')+1)), 0, 4); @endphp
+                                <select name="current_session" class="w-full rounded-lg border-gray-300">
+                                    @for($y = date('Y') - 2; $y <= date('Y') + 3; $y++)
+                                        @php $sess = $y.'/'.($y+1); @endphp
+                                        <option value="{{ $sess }}" {{ setting('current_session') === $sess ? 'selected' : '' }}>{{ $sess }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Term</label>
+                                <select name="current_term" class="w-full rounded-lg border-gray-300">
+                                    @foreach(\App\Http\Controllers\TermController::TERMS as $t)
+                                        <option value="{{ $t }}" {{ setting('current_term') === $t ? 'selected' : '' }}>{{ $t }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Term Starts</label>
+                                <input type="date" name="term_start" value="{{ setting('term_start') }}" class="w-full rounded-lg border-gray-300" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Term Ends</label>
+                                <input type="date" name="term_end" value="{{ setting('term_end') }}" class="w-full rounded-lg border-gray-300" required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button class="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold hover:bg-indigo-700 transition">Execute — Set Active Term</button>
+                            </div>
+                        </form>
+                        <form method="POST" action="{{ route('term.clear-assignments') }}" class="mt-4 pt-4 border-t"
+                              onsubmit="return confirm('Clear ALL teacher class & subject assignments? Use this at end of term before reassigning. Scores already entered are NOT affected.')">
+                            @csrf
+                            <button class="text-sm bg-red-50 text-red-700 border border-red-200 px-4 py-2 rounded-lg font-bold hover:bg-red-100">
+                                🧹 Clear all teacher assignments (new term reset)
+                            </button>
+                        </form>
+                    </div>
+
                     <!-- Today's clock in/out -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                         <div class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">

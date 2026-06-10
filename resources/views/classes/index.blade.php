@@ -14,11 +14,14 @@
                     @csrf
                     <div class="sm:col-span-2">
                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Class Name</label>
-                        <input name="name" placeholder="e.g. JSS1B" class="w-full border-gray-300 rounded-md shadow-sm" required>
+                        <input name="name" placeholder="e.g. JSS1B or Primary 1" class="w-full border-gray-300 rounded-md shadow-sm" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Level <span class="text-gray-300">(opt)</span></label>
-                        <input name="level" placeholder="JSS / SSS" class="w-full border-gray-300 rounded-md shadow-sm">
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Section</label>
+                        <select name="section" class="w-full border-gray-300 rounded-md shadow-sm" required>
+                            <option value="">Select…</option>
+                            @foreach($sections as $s)<option value="{{ $s }}">{{ $s }}</option>@endforeach
+                        </select>
                     </div>
                     <button class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-bold hover:bg-indigo-700 text-sm h-10">Add Class</button>
                 </form>
@@ -29,7 +32,7 @@
                 <table class="w-full text-left text-sm">
                     <thead>
                         <tr class="bg-gray-50 border-b text-xs uppercase text-gray-500">
-                            <th class="p-3">Class</th><th class="p-3">Level</th><th class="p-3">Students</th>
+                            <th class="p-3">Class</th><th class="p-3">Section</th><th class="p-3">Students</th>
                             <th class="p-3">Teachers</th><th class="p-3">Status</th><th class="p-3 text-right">Action</th>
                         </tr>
                     </thead>
@@ -37,7 +40,7 @@
                         @forelse($classes as $c)
                         <tr class="border-b hover:bg-gray-50">
                             <td class="p-3 font-bold">{{ $c->name }}</td>
-                            <td class="p-3 text-gray-500">{{ $c->level ?? '—' }}</td>
+                            <td class="p-3 text-gray-500">{{ $c->section ?? '—' }}</td>
                             <td class="p-3">{{ $c->student_count }}</td>
                             <td class="p-3">{{ $c->teachers_count }}</td>
                             <td class="p-3">

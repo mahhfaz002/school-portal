@@ -28,6 +28,7 @@ use App\Http\Controllers\ExamWorkController;
 use App\Http\Controllers\StudentExamController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\TermController;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +63,9 @@ Route::middleware(['auth', 'verified', 'force.password.change', 'readonly'])->gr
 
     // --- Core Dashboard ---
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // --- Notifications (aggregated, role-aware) ---
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
 
 
     // --- Admission Management (legacy panel) — registrar/admin + ICT only ---
@@ -140,8 +144,9 @@ Route::middleware(['auth', 'verified', 'force.password.change', 'readonly'])->gr
     Route::middleware('role:'.Permissions::middleware('view_fees'))->group(function () {
         Route::get('/fees', [FeeController::class, 'index'])->name('fees.index');
     });
-    // Receipts are viewable by oversight + finance roles.
+    // Receipts — finance/oversight staff + the owning student (authorized in controller).
     Route::get('/payments/{payment}/receipt', [PaymentController::class, 'show'])->name('payments.receipt');
+    Route::get('/payments/{payment}/receipt/pdf', [PaymentController::class, 'downloadReceipt'])->name('payments.receipt.pdf');
 
     // --- Attendance --- (bursar & ICT excluded)
     Route::middleware('role:'.Permissions::middleware('view_attendance'))->group(function () {
@@ -194,6 +199,12 @@ Route::middleware(['auth', 'verified', 'force.password.change', 'readonly'])->gr
         Route::post('/timetable/generate', [TimetableController::class, 'generate'])->name('timetable.generate');
         Route::post('/timetable/{plan}/approve', [TimetableController::class, 'approve'])->name('timetable.approve');
         Route::delete('/timetable/{plan}', [TimetableController::class, 'destroy'])->name('timetable.destroy');
+    });
+
+    // --- Term / Session control (Principal) ---
+    Route::middleware('role:'.Permissions::middleware('manage_term'))->group(function () {
+        Route::post('/term', [TermController::class, 'update'])->name('term.update');
+        Route::post('/term/clear-assignments', [TermController::class, 'clearAssignments'])->name('term.clear-assignments');
     });
 
     // --- Library ---
@@ -256,6 +267,8 @@ Route::middleware(['auth', 'verified', 'force.password.change', 'readonly'])->gr
         Route::post('/payroll/{user}', [PayslipController::class, 'store'])->name('payroll.store');
         Route::post('/payroll-submit', [PayslipController::class, 'submit'])->name('payroll.submit');
         Route::post('/payroll/{payslip}/pay', [PayslipController::class, 'pay'])->name('payroll.pay');
+        Route::get('/payroll/{payslip}/slip', [PayslipController::class, 'show'])->name('payroll.slip');
+        Route::get('/payroll/{payslip}/slip/pdf', [PayslipController::class, 'downloadSlip'])->name('payroll.slip.pdf');
     });
     Route::middleware('role:'.Permissions::middleware('review_payroll'))->group(function () {
         Route::get('/payroll-review', [PayslipController::class, 'review'])->name('payroll.review');
@@ -306,10 +319,21 @@ Route::middleware(['auth', 'verified', 'force.password.change', 'readonly'])->gr
         ->name('superadmin.switchboard')
         ->middleware('role:proprietor,ict');
 
-    // Inventory & Detailed Admissions
+    // Inventory + admissions list (Admin/ICT/Proprietor view)
     Route::middleware(['role:admin,ict,proprietor'])->group(function () {
         Route::resource('inventory', InventoryItemController::class);
         Route::get('/admin/admissions', [ApplicantController::class, 'index'])->name('admission.admin');
+    });
+
+    // ICT creates admission applications (with section + class + documents).
+    Route::middleware('role:'.Permissions::middleware('create_admissions'))->group(function () {
+        Route::get('/admissions/apply', [ApplicantController::class, 'createApplication'])->name('admission.apply');
+        Route::post('/admissions/apply', [ApplicantController::class, 'storeApplication'])
+            ->middleware('throttle:30,1')->name('admission.apply.store');
+    });
+
+    // Admin/Registrar approves or rejects (ICT can no longer approve).
+    Route::middleware('role:'.Permissions::middleware('manage_admissions'))->group(function () {
         Route::post('/admin/admissions/{id}/approve', [ApplicantController::class, 'approve'])->name('admission.approve');
         Route::post('/admin/admissions/{id}/reject', [ApplicantController::class, 'reject'])->name('admission.reject');
     });
